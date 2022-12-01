@@ -12,7 +12,7 @@
 * Exponential Smoothing as a baseline
 * Linear Regression with lag features
 * XGBoost
-* FbProphet (tried)
+* FbProphet
 
 **Other important things thought of:**
 * Validating schema
