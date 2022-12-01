@@ -1,5 +1,7 @@
+import pandas as pd
 from sklearn.base import BaseEstimator
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
+from fbprophet import Prophet
 
 class ExpEstimator(BaseEstimator):
     """Holt Winter's Exponential Smoothing."""
@@ -21,7 +23,7 @@ class ExpEstimator(BaseEstimator):
         self.smoothing_seasonal = smoothing_seasonal
 
     def fit(self, X, y=None):
-        """Fit the model using the exponential smoothing."""
+        """Fit the model using exponential smoothing."""
         
         self.simple_exp = ExponentialSmoothing(
             endog=X,
@@ -37,7 +39,7 @@ class ExpEstimator(BaseEstimator):
 
     def predict(self, X):
         """
-        Predict using the exponential smoothing.
+        Predict using exponential smoothing.
         
         Arguments:
         X : array_like
@@ -48,3 +50,32 @@ class ExpEstimator(BaseEstimator):
         """
         
         return self.simple_exp.forecast(len(X))
+    
+    
+class ProphetEstimator(BaseEstimator):    
+    """FbProphet."""
+        
+    def __init__(
+        self,
+        holidays=None
+    ):
+        self.holidays = holidays
+        
+    def fit(self, X, y=None):   
+        """Fit the model on dataframe with columns 'ds' and 'y' using FbProphet."""
+        
+        df_train = pd.DataFrame(X).rename(columns = {0: 'ds', 1: 'y'})
+        self.prophet = Prophet(holidays=self.holidays).fit(df=df_train)
+        return self
+    
+    def predict(self, X):
+        """
+        Predict on future date (the beggining of the next month) using FbProphet.
+        
+        Returns:
+        predicted_values : array_like
+        """
+        
+        future_date = self.prophet.make_future_dataframe(periods=1, freq='MS', include_history=False)
+        predictions = self.prophet.predict(future_date)
+        return predictions.yhat.values
