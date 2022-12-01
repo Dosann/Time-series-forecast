@@ -61,7 +61,6 @@ def plot_results(x, y_true, y_pred, title):
     plt.title(title)
     plt.show()
     
-    
 def make_lags(ts, lags):
     """
     Make lags of time-series data
@@ -83,3 +82,22 @@ def make_lags(ts, lags):
     
     return lagged_df
 
+def get_X_y_from_lagged_df(df_list, target_ts):
+    """
+    Get X, y from dataframe with lags
+    
+    Arguments:
+    df_list : dataframes (with lags) to concatenate 
+    target_ts : target dataframe for y
+    
+    Returns:
+    X : concatenated dataframe
+    y : values from target dataframe
+    """
+    
+    res = pd.concat(df_list, axis=1)
+    res.dropna(inplace=True)
+    date_to_start_from = res.iloc[0].name
+    X, y = res, target_ts[target_ts.index >= date_to_start_from]
+    
+    return X, y
