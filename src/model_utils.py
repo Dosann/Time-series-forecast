@@ -6,13 +6,31 @@ import seaborn as sns
 from sklearn.metrics import mean_absolute_percentage_error as mape
 from sklearn.model_selection import TimeSeriesSplit
 
+def indexing(X, indices):
+    """
+    Returns row of X using indices
+    
+    Arguments:
+    X : dataframe or array to sample rows
+    indices : int or array of indices
+    
+    Returns:
+        subset of X on axis 0
+    """
+    
+    if hasattr(X, 'iloc'):
+        X = X.iloc[indices]
+    else:
+        X = X[indices]
+    return X
+
 def evaluate(model, X, y=None):
     """
-    Fit, predict and evaluate the results of a model on time-series cross-validation.
+    Fits, predicts and evaluates the results of a model on time-series cross-validation.
     
     Arguments:
     model : model to fit, predict and evaluate
-    X : data set values which we want fit and predict
+    X : time-series dataframe or array to fit and predict
     y : target values
     
     Returns:
@@ -24,11 +42,16 @@ def evaluate(model, X, y=None):
     mape_errors = []
     predicted_values = []
     for train, test in tscv.split(X):
-        model.fit(X[train], y[train])
-        prediction = model.predict(X[test])
-        predicted_values.append(prediction[0])
         
-        actual = y[test]
+        X_train = indexing(X, train)
+        X_test = indexing(X, test)
+        y_train = indexing(y, train)
+        y_test = indexing(y, test)
+        
+        model.fit(X_train, y_train)
+        prediction = model.predict(X_test)
+        predicted_values.append(prediction[0])
+        actual = y_test
     
         mape_errors.append(mape(actual, prediction))
         
@@ -41,7 +64,7 @@ def evaluate(model, X, y=None):
 
 def plot_results(x, y_true, y_pred, title):
     """
-    Plot actual and predicted results of a model
+    Plots actual and predicted results of a model
     
     Arguments:
     x : x-axis
@@ -63,7 +86,7 @@ def plot_results(x, y_true, y_pred, title):
     
 def make_lags(ts, lags):
     """
-    Make lags of time-series data
+    Makes lags of time-series data
     
     Arguments:
     ts : series to make lags of it
@@ -84,7 +107,7 @@ def make_lags(ts, lags):
 
 def get_X_y_from_lagged_df(df_list, target_ts):
     """
-    Get X, y from dataframe with lags
+    Gets X, y from dataframe with lags
     
     Arguments:
     df_list : dataframes (with lags) to concatenate 
@@ -101,3 +124,19 @@ def get_X_y_from_lagged_df(df_list, target_ts):
     X, y = res, target_ts[target_ts.index >= date_to_start_from]
     
     return X, y
+
+
+def difference(ts, periods=1):
+    """
+    Calculates the difference of a Series element compared with another element in the Series (default is element in previous row).
+    
+    Arguments:
+    ts : time-series
+    periods : periods to shift for calculating difference
+    
+    Returns:
+    result_df : first differences of the time-series dataframe.
+    """
+    
+    result_df = pd.DataFrame(ts.diff(periods=periods))
+    return result_df

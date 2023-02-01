@@ -1,5 +1,5 @@
 import pandas as pd
-from sklearn.base import BaseEstimator
+from sklearn.base import BaseEstimator, TransformerMixin
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
 from fbprophet import Prophet
 
@@ -50,6 +50,27 @@ class ExpEstimator(BaseEstimator):
         """
         
         return self.simple_exp.forecast(len(X))
+    
+    
+class TargetTransform(BaseEstimator, TransformerMixin):
+    """Target Transformer."""
+    
+    def fit(self, X, y=None):
+        """Remembers the last trained target value."""
+        
+        self.last_trained = X[-1]
+        return self
+
+    def transform(self, X):
+        """Calculates the difference of a Series element compared with previous element in the Series."""
+        
+        diff = difference(pd.DataFrame(X)).fillna(0)
+        return diff
+    
+    def inverse_transform(self, X):
+        """Added to predicted value the last saved trained target value"""
+
+        return (pd.DataFrame(X) + self.last_trained)
     
     
 class ProphetEstimator(BaseEstimator):    
